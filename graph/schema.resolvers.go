@@ -42,7 +42,7 @@ func (r *mutationResolver) AddProjectV2ItemByID(ctx context.Context, input model
 
 // Owner is the resolver for the owner field.
 func (r *projectV2Resolver) Owner(ctx context.Context, obj *model.ProjectV2) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: Owner - owner"))
+	return r.Srv.GetUserByID(ctx, obj.Owner.ID)
 }
 
 // Repository is the resolver for the repository field.
@@ -88,12 +88,12 @@ func (r *repositoryResolver) Issue(ctx context.Context, obj *model.Repository, n
 
 // Issues is the resolver for the issues field.
 func (r *repositoryResolver) Issues(ctx context.Context, obj *model.Repository, after *string, before *string, first *int, last *int) (*model.IssueConnection, error) {
-	panic(fmt.Errorf("not implemented: Issues - issues"))
+	return r.Srv.ListIssueInRepository(ctx, obj.ID, after, before, first, last)
 }
 
 // PullRequest is the resolver for the pullRequest field.
 func (r *repositoryResolver) PullRequest(ctx context.Context, obj *model.Repository, number int) (*model.PullRequest, error) {
-	panic(fmt.Errorf("not implemented: PullRequest - pullRequest"))
+	return r.Srv.GetPullRequestByRepoAndNumber(ctx, obj.ID, number)
 }
 
 // PullRequests is the resolver for the pullRequests field.

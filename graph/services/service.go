@@ -13,6 +13,7 @@ func New(exec boil.ContextExecutor) Services {
 		repoService:        &repoService{exec: exec},
 		projectItemService: &projectItemService{exec: exec},
 		issueService:       &issueService{exec: exec},
+		pullRequestService: &pullRequestService{exec: exec},
 	}
 }
 
@@ -21,6 +22,7 @@ type Services interface {
 	Reposervice
 	ProjectItemService
 	IssueService
+	PullRequestService
 }
 
 type UserService interface {
@@ -38,6 +40,11 @@ type ProjectItemService interface {
 
 type IssueService interface {
 	GetIssueByRepoAndNumber(ctx context.Context, repoID string, number int) (*model.Issue, error)
+	ListIssueInRepository(ctx context.Context, repoID string, after *string, before *string, first *int, last *int) (*model.IssueConnection, error)
+}
+
+type PullRequestService interface {
+	GetPullRequestByRepoAndNumber(ctx context.Context, repoID string, number int) (*model.PullRequest, error)
 }
 
 type services struct {
@@ -45,4 +52,5 @@ type services struct {
 	*repoService
 	*projectItemService
 	*issueService
+	*pullRequestService
 }
