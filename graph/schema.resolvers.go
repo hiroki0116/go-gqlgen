@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"errors"
-	"fmt"
 	"gqlgen-go/graph/model"
 	"gqlgen-go/internal"
 	"strings"
@@ -15,7 +14,29 @@ import (
 
 // AddProjectV2ItemByID is the resolver for the addProjectV2ItemById field.
 func (r *mutationResolver) AddProjectV2ItemByID(ctx context.Context, input model.AddProjectV2ItemByIDInput) (*model.AddProjectV2ItemByIDPayload, error) {
-	panic(fmt.Errorf("not implemented: AddProjectV2ItemByID - addProjectV2ItemById"))
+	nElems := strings.SplitN(input.ContentID, "_", 2)
+	nType, _ := nElems[0], nElems[1]
+
+	switch nType {
+	case "ISSUE":
+		item, err := r.Srv.AddIssueInProjectV2(ctx, input.ProjectID, input.ContentID)
+		if err != nil {
+			return nil, err
+		}
+		return &model.AddProjectV2ItemByIDPayload{
+			Item: item,
+		}, nil
+	// case "PR":
+	// 	item, err := r.Srv.AddPullRequestInProjectV2(ctx, input.ProjectID, input.ContentID)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	return &model.AddProjectV2ItemByIDPayload{
+	// 		Item: item,
+	// 	}, nil
+	default:
+		return nil, errors.New("invalid content id")
+	}
 }
 
 // Repository is the resolver for the repository field.

@@ -9,14 +9,16 @@ import (
 
 func New(exec boil.ContextExecutor) Services {
 	return &services{
-		userService: &userService{exec: exec},
-		repoService: &repoService{exec: exec},
+		userService:        &userService{exec: exec},
+		repoService:        &repoService{exec: exec},
+		projectItemService: &projectItemService{exec: exec},
 	}
 }
 
 type Services interface {
 	UserService
 	Reposervice
+	ProjectItemService
 }
 
 type UserService interface {
@@ -27,7 +29,12 @@ type Reposervice interface {
 	GetRepoByFullName(ctx context.Context, name, owner string) (*model.Repository, error)
 }
 
+type ProjectItemService interface {
+	AddIssueInProjectV2(ctx context.Context, projectID, issueID string) (*model.ProjectV2Item, error)
+}
+
 type services struct {
 	*userService
 	*repoService
+	*projectItemService
 }
