@@ -38,6 +38,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Issue() IssueResolver
 	Mutation() MutationResolver
 	ProjectV2() ProjectV2Resolver
 	Query() QueryResolver
@@ -173,6 +174,9 @@ type ComplexityRoot struct {
 	}
 }
 
+type IssueResolver interface {
+	Author(ctx context.Context, obj *model.Issue) (*model.User, error)
+}
 type MutationResolver interface {
 	AddProjectV2ItemByID(ctx context.Context, input model.AddProjectV2ItemByIDInput) (*model.AddProjectV2ItemByIDPayload, error)
 }
@@ -1711,7 +1715,7 @@ func (ec *executionContext) _Issue_author(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Author, nil
+		return ec.resolvers.Issue().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1732,8 +1736,8 @@ func (ec *executionContext) fieldContext_Issue_author(ctx context.Context, field
 	fc = &graphql.FieldContext{
 		Object:     "Issue",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -7052,56 +7056,69 @@ func (ec *executionContext) _Issue(ctx context.Context, sel ast.SelectionSet, ob
 			out.Values[i] = ec._Issue_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "url":
 
 			out.Values[i] = ec._Issue_url(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "title":
 
 			out.Values[i] = ec._Issue_title(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "closed":
 
 			out.Values[i] = ec._Issue_closed(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "number":
 
 			out.Values[i] = ec._Issue_number(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "author":
+			field := field
 
-			out.Values[i] = ec._Issue_author(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Issue_author(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "repository":
 
 			out.Values[i] = ec._Issue_repository(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "projectItems":
 
 			out.Values[i] = ec._Issue_projectItems(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))

@@ -83,3 +83,7 @@ models:
     fields:
       owner:
         resolver: true
+  Issue:
+    fields:
+      author:
+        resolver: true

@@ -32,6 +32,7 @@ type UserService interface {
 
 type Reposervice interface {
 	GetRepoByFullName(ctx context.Context, name, owner string) (*model.Repository, error)
+	GetRepoByID(ctx context.Context, id string) (*model.Repository, error)
 }
 
 type ProjectItemService interface {

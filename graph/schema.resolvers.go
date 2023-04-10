@@ -12,6 +12,11 @@ import (
 	"strings"
 )
 
+// Author is the resolver for the author field.
+func (r *issueResolver) Author(ctx context.Context, obj *model.Issue) (*model.User, error) {
+	return r.Srv.GetUserByID(ctx, obj.Author.ID)
+}
+
 // AddProjectV2ItemByID is the resolver for the addProjectV2ItemById field.
 func (r *mutationResolver) AddProjectV2ItemByID(ctx context.Context, input model.AddProjectV2ItemByIDInput) (*model.AddProjectV2ItemByIDPayload, error) {
 	nElems := strings.SplitN(input.ContentID, "_", 2)
@@ -60,10 +65,10 @@ func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error)
 	nType, _ := nElems[0], nElems[1]
 
 	switch nType {
-	// case "U":
-	// 	return r.Srv.GetUserByID(ctx, id)
-	// case "REPO":
-	// 	return r.Srv.GetRepoByID(ctx, id)
+	case "U":
+		return r.Srv.GetUserByID(ctx, id)
+	case "REPO":
+		return r.Srv.GetRepoByID(ctx, id)
 	// case "ISSUE":
 	// 	return r.Srv.GetIssueByID(ctx, id)
 	// case "PJ":
@@ -100,6 +105,9 @@ func (r *repositoryResolver) PullRequests(ctx context.Context, obj *model.Reposi
 	return r.Srv.ListPullRequestInRepository(ctx, obj.ID, after, before, first, last)
 }
 
+// Issue returns internal.IssueResolver implementation.
+func (r *Resolver) Issue() internal.IssueResolver { return &issueResolver{r} }
+
 // Mutation returns internal.MutationResolver implementation.
 func (r *Resolver) Mutation() internal.MutationResolver { return &mutationResolver{r} }
 
@@ -112,6 +120,7 @@ func (r *Resolver) Query() internal.QueryResolver { return &queryResolver{r} }
 // Repository returns internal.RepositoryResolver implementation.
 func (r *Resolver) Repository() internal.RepositoryResolver { return &repositoryResolver{r} }
 
+type issueResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type projectV2Resolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
