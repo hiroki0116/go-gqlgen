@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"errors"
-	"fmt"
 	"gqlgen-go/graph/model"
 	"gqlgen-go/internal"
 	"strings"
@@ -98,7 +97,7 @@ func (r *repositoryResolver) PullRequest(ctx context.Context, obj *model.Reposit
 
 // PullRequests is the resolver for the pullRequests field.
 func (r *repositoryResolver) PullRequests(ctx context.Context, obj *model.Repository, after *string, before *string, first *int, last *int) (*model.PullRequestConnection, error) {
-	panic(fmt.Errorf("not implemented: PullRequests - pullRequests"))
+	return r.Srv.ListPullRequestInRepository(ctx, obj.ID, after, before, first, last)
 }
 
 // Mutation returns internal.MutationResolver implementation.

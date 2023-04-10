@@ -45,6 +45,7 @@ type IssueService interface {
 
 type PullRequestService interface {
 	GetPullRequestByRepoAndNumber(ctx context.Context, repoID string, number int) (*model.PullRequest, error)
+	ListPullRequestInRepository(ctx context.Context, repoID string, after *string, before *string, first *int, last *int) (*model.PullRequestConnection, error)
 }
 
 type services struct {
