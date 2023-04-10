@@ -61,9 +61,29 @@ models:
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
-   DateTime:
+  DateTime:
     model:
       - github.com/99designs/gqlgen/graphql.Time
   URI:
     model:
       - gqlgen-go/graph/model.URI
+  Repository:
+    fields:
+      owner:
+        resolver: true
+      issue:
+        resolver: true
+      issues:
+        resolver: true
+      pullRequest:
+        resolver: true
+      pullRequests:
+        resolver: true
+  ProjectV2:
+    fields:
+      owner:
+        resolver: true
+  Issue:
+    fields:
+      author:
+        resolver: true

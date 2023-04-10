@@ -8,8 +8,11 @@ import (
 	"errors"
 	"fmt"
 	"gqlgen-go/graph/model"
+	"net/url"
 	"strconv"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -35,8 +38,11 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Issue() IssueResolver
 	Mutation() MutationResolver
+	ProjectV2() ProjectV2Resolver
 	Query() QueryResolver
+	Repository() RepositoryResolver
 }
 
 type DirectiveRoot struct {
@@ -168,13 +174,27 @@ type ComplexityRoot struct {
 	}
 }
 
+type IssueResolver interface {
+	Author(ctx context.Context, obj *model.Issue) (*model.User, error)
+}
 type MutationResolver interface {
 	AddProjectV2ItemByID(ctx context.Context, input model.AddProjectV2ItemByIDInput) (*model.AddProjectV2ItemByIDPayload, error)
+}
+type ProjectV2Resolver interface {
+	Owner(ctx context.Context, obj *model.ProjectV2) (*model.User, error)
 }
 type QueryResolver interface {
 	Repository(ctx context.Context, name string, owner string) (*model.Repository, error)
 	User(ctx context.Context, name string) (*model.User, error)
 	Node(ctx context.Context, id string) (model.Node, error)
+}
+type RepositoryResolver interface {
+	Owner(ctx context.Context, obj *model.Repository) (*model.User, error)
+
+	Issue(ctx context.Context, obj *model.Repository, number int) (*model.Issue, error)
+	Issues(ctx context.Context, obj *model.Repository, after *string, before *string, first *int, last *int) (*model.IssueConnection, error)
+	PullRequest(ctx context.Context, obj *model.Repository, number int) (*model.PullRequest, error)
+	PullRequests(ctx context.Context, obj *model.Repository, after *string, before *string, first *int, last *int) (*model.PullRequestConnection, error)
 }
 
 type executableSchema struct {
@@ -1531,9 +1551,9 @@ func (ec *executionContext) _Issue_url(ctx context.Context, field graphql.Collec
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(url.URL)
 	fc.Result = res
-	return ec.marshalNURI2string(ctx, field.Selections, res)
+	return ec.marshalNURI2netᚋurlᚐURL(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Issue_url(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1695,7 +1715,7 @@ func (ec *executionContext) _Issue_author(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Author, nil
+		return ec.resolvers.Issue().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1716,8 +1736,8 @@ func (ec *executionContext) fieldContext_Issue_author(ctx context.Context, field
 	fc = &graphql.FieldContext{
 		Object:     "Issue",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -2509,9 +2529,9 @@ func (ec *executionContext) _ProjectV2_url(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(url.URL)
 	fc.Result = res
-	return ec.marshalNURI2string(ctx, field.Selections, res)
+	return ec.marshalNURI2netᚋurlᚐURL(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ProjectV2_url(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2650,7 +2670,7 @@ func (ec *executionContext) _ProjectV2_owner(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Owner, nil
+		return ec.resolvers.ProjectV2().Owner(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2671,8 +2691,8 @@ func (ec *executionContext) fieldContext_ProjectV2_owner(ctx context.Context, fi
 	fc = &graphql.FieldContext{
 		Object:     "ProjectV2",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -3621,9 +3641,9 @@ func (ec *executionContext) _PullRequest_url(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(url.URL)
 	fc.Result = res
-	return ec.marshalNURI2string(ctx, field.Selections, res)
+	return ec.marshalNURI2netᚋurlᚐURL(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PullRequest_url(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4488,7 +4508,7 @@ func (ec *executionContext) _Repository_owner(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Owner, nil
+		return ec.resolvers.Repository().Owner(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4509,8 +4529,8 @@ func (ec *executionContext) fieldContext_Repository_owner(ctx context.Context, f
 	fc = &graphql.FieldContext{
 		Object:     "Repository",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -4598,9 +4618,9 @@ func (ec *executionContext) _Repository_createdAt(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+	return ec.marshalNDateTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Repository_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4630,7 +4650,7 @@ func (ec *executionContext) _Repository_issue(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Issue, nil
+		return ec.resolvers.Repository().Issue(rctx, obj, fc.Args["number"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4648,8 +4668,8 @@ func (ec *executionContext) fieldContext_Repository_issue(ctx context.Context, f
 	fc = &graphql.FieldContext{
 		Object:     "Repository",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -4700,7 +4720,7 @@ func (ec *executionContext) _Repository_issues(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Issues, nil
+		return ec.resolvers.Repository().Issues(rctx, obj, fc.Args["after"].(*string), fc.Args["before"].(*string), fc.Args["first"].(*int), fc.Args["last"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4721,8 +4741,8 @@ func (ec *executionContext) fieldContext_Repository_issues(ctx context.Context, 
 	fc = &graphql.FieldContext{
 		Object:     "Repository",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "edges":
@@ -4765,7 +4785,7 @@ func (ec *executionContext) _Repository_pullRequest(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.PullRequest, nil
+		return ec.resolvers.Repository().PullRequest(rctx, obj, fc.Args["number"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4783,8 +4803,8 @@ func (ec *executionContext) fieldContext_Repository_pullRequest(ctx context.Cont
 	fc = &graphql.FieldContext{
 		Object:     "Repository",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -4835,7 +4855,7 @@ func (ec *executionContext) _Repository_pullRequests(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.PullRequests, nil
+		return ec.resolvers.Repository().PullRequests(rctx, obj, fc.Args["after"].(*string), fc.Args["before"].(*string), fc.Args["first"].(*int), fc.Args["last"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4856,8 +4876,8 @@ func (ec *executionContext) fieldContext_Repository_pullRequests(ctx context.Con
 	fc = &graphql.FieldContext{
 		Object:     "Repository",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "edges":
@@ -7036,56 +7056,69 @@ func (ec *executionContext) _Issue(ctx context.Context, sel ast.SelectionSet, ob
 			out.Values[i] = ec._Issue_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "url":
 
 			out.Values[i] = ec._Issue_url(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "title":
 
 			out.Values[i] = ec._Issue_title(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "closed":
 
 			out.Values[i] = ec._Issue_closed(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "number":
 
 			out.Values[i] = ec._Issue_number(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "author":
+			field := field
 
-			out.Values[i] = ec._Issue_author(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Issue_author(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "repository":
 
 			out.Values[i] = ec._Issue_repository(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "projectItems":
 
 			out.Values[i] = ec._Issue_projectItems(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -7267,43 +7300,56 @@ func (ec *executionContext) _ProjectV2(ctx context.Context, sel ast.SelectionSet
 			out.Values[i] = ec._ProjectV2_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "title":
 
 			out.Values[i] = ec._ProjectV2_title(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "url":
 
 			out.Values[i] = ec._ProjectV2_url(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "number":
 
 			out.Values[i] = ec._ProjectV2_number(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "items":
 
 			out.Values[i] = ec._ProjectV2_items(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "owner":
+			field := field
 
-			out.Values[i] = ec._ProjectV2_owner(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ProjectV2_owner(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7773,51 +7819,116 @@ func (ec *executionContext) _Repository(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = ec._Repository_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "owner":
+			field := field
 
-			out.Values[i] = ec._Repository_owner(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Repository_owner(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "name":
 
 			out.Values[i] = ec._Repository_name(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "createdAt":
 
 			out.Values[i] = ec._Repository_createdAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "issue":
+			field := field
 
-			out.Values[i] = ec._Repository_issue(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Repository_issue(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "issues":
+			field := field
 
-			out.Values[i] = ec._Repository_issues(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Repository_issues(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "pullRequest":
+			field := field
 
-			out.Values[i] = ec._Repository_pullRequest(ctx, field, obj)
-
-		case "pullRequests":
-
-			out.Values[i] = ec._Repository_pullRequests(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Repository_pullRequest(ctx, field, obj)
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "pullRequests":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Repository_pullRequests(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8213,13 +8324,13 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNDateTime2string(ctx context.Context, v interface{}) (string, error) {
-	res, err := graphql.UnmarshalString(v)
+func (ec *executionContext) unmarshalNDateTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
+	res, err := graphql.UnmarshalTime(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDateTime2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalString(v)
+func (ec *executionContext) marshalNDateTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+	res := graphql.MarshalTime(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -8256,6 +8367,10 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNIssueConnection2gqlgenᚑgoᚋgraphᚋmodelᚐIssueConnection(ctx context.Context, sel ast.SelectionSet, v model.IssueConnection) graphql.Marshaler {
+	return ec._IssueConnection(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNIssueConnection2ᚖgqlgenᚑgoᚋgraphᚋmodelᚐIssueConnection(ctx context.Context, sel ast.SelectionSet, v *model.IssueConnection) graphql.Marshaler {
@@ -8308,6 +8423,10 @@ func (ec *executionContext) marshalNProjectV2ItemConnection2ᚖgqlgenᚑgoᚋgra
 	return ec._ProjectV2ItemConnection(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNPullRequestConnection2gqlgenᚑgoᚋgraphᚋmodelᚐPullRequestConnection(ctx context.Context, sel ast.SelectionSet, v model.PullRequestConnection) graphql.Marshaler {
+	return ec._PullRequestConnection(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNPullRequestConnection2ᚖgqlgenᚑgoᚋgraphᚋmodelᚐPullRequestConnection(ctx context.Context, sel ast.SelectionSet, v *model.PullRequestConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -8343,19 +8462,23 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNURI2string(ctx context.Context, v interface{}) (string, error) {
-	res, err := graphql.UnmarshalString(v)
+func (ec *executionContext) unmarshalNURI2netᚋurlᚐURL(ctx context.Context, v interface{}) (url.URL, error) {
+	res, err := model.UnmarshalURI(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNURI2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalString(v)
+func (ec *executionContext) marshalNURI2netᚋurlᚐURL(ctx context.Context, sel ast.SelectionSet, v url.URL) graphql.Marshaler {
+	res := model.MarshalURI(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNUser2gqlgenᚑgoᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+	return ec._User(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNUser2ᚖgqlgenᚑgoᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {

@@ -27,6 +27,7 @@ func main() {
 	}
 
 	db, err := sql.Open("sqlite3", fmt.Sprintf("%s?_foreign_keys=on", dbFile))
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,12 +36,12 @@ func main() {
 	services := services.New(db)
 
 	srv := handler.NewDefaultServer(internal.NewExecutableSchema(internal.Config{Resolvers: &graph.Resolver{
-		Srv: services,
+		Srv:     services,
+		Loaders: graph.NewLoaders(services),
 	}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
-
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
