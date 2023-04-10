@@ -11,17 +11,20 @@ require (
 	github.com/volatiletech/strmangle v0.0.4
 )
 
+require github.com/opentracing/opentracing-go v1.2.0 // indirect
+
 require (
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0 // indirect
+	github.com/graph-gophers/dataloader v5.0.0+incompatible
+	github.com/graph-gophers/dataloader/v7 v7.1.0
 	github.com/hashicorp/golang-lru/v2 v2.0.1 // indirect
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/volatiletech/inflect v0.0.1 // indirect
 	github.com/volatiletech/randomize v0.0.1 // indirect
-	github.com/volatiletech/sqlboiler v3.7.1+incompatible
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
 )
