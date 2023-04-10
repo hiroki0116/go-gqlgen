@@ -40,6 +40,11 @@ func (r *mutationResolver) AddProjectV2ItemByID(ctx context.Context, input model
 	}
 }
 
+// Owner is the resolver for the owner field.
+func (r *projectV2Resolver) Owner(ctx context.Context, obj *model.ProjectV2) (*model.User, error) {
+	panic(fmt.Errorf("not implemented: Owner - owner"))
+}
+
 // Repository is the resolver for the repository field.
 func (r *queryResolver) Repository(ctx context.Context, name string, owner string) (*model.Repository, error) {
 	return r.Srv.GetRepoByFullName(ctx, name, owner)
@@ -99,6 +104,9 @@ func (r *repositoryResolver) PullRequests(ctx context.Context, obj *model.Reposi
 // Mutation returns internal.MutationResolver implementation.
 func (r *Resolver) Mutation() internal.MutationResolver { return &mutationResolver{r} }
 
+// ProjectV2 returns internal.ProjectV2Resolver implementation.
+func (r *Resolver) ProjectV2() internal.ProjectV2Resolver { return &projectV2Resolver{r} }
+
 // Query returns internal.QueryResolver implementation.
 func (r *Resolver) Query() internal.QueryResolver { return &queryResolver{r} }
 
@@ -106,5 +114,6 @@ func (r *Resolver) Query() internal.QueryResolver { return &queryResolver{r} }
 func (r *Resolver) Repository() internal.RepositoryResolver { return &repositoryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
+type projectV2Resolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type repositoryResolver struct{ *Resolver }

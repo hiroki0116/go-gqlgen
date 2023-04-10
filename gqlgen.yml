@@ -79,3 +79,7 @@ models:
         resolver: true
       pullRequests:
         resolver: true
+  ProjectV2:
+    fields:
+      owner:
+        resolver: true
